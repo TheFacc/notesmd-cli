@@ -107,13 +107,13 @@ func MomentToGoFormat(momentFmt string) string {
 	result := momentFmt
 	for i, r := range replacements {
 		placeholder := fmt.Sprintf("\x00%d\x00", i)
-		result = strings.Replace(result, r.moment, placeholder, -1)
+		result = strings.ReplaceAll(result, r.moment, placeholder)
 	}
 
 	// Pass 2: replace placeholders with Go format strings.
 	for i, r := range replacements {
 		placeholder := fmt.Sprintf("\x00%d\x00", i)
-		result = strings.Replace(result, placeholder, r.goFmt, -1)
+		result = strings.ReplaceAll(result, placeholder, r.goFmt)
 	}
 
 	return result
