@@ -51,6 +51,80 @@ Or build from source:
 yay -S notesmd-cli
 ```
 
+### Nix / NixOS
+
+The package is **not** in Nixpkgs as of this writing. You can install it with the **flake in this repo** (see below), or using the `buildGoModule` in **NixOS / Home Manager**, or by reusing the package from this flake inside your own.
+
+#### Nix Flake
+
+The repo includes `flake.nix` at the root. `flake.lock` pins revs to ensure reproducibility. You can use the package in various ways:
+
+
+- **Run the CLI directly** - use `--` so flags go to `notesmd-cli`, not Nix:
+
+  ```bash
+  nix run github:Yakitrak/notesmd-cli -- --help
+  nix run github:Yakitrak/notesmd-cli -- list-vaults
+  ```
+
+- Or clone the repo, and then run it:
+
+  ```bash
+  nix run .# -- --help
+  ```
+
+- Or build and use the binary from `./result`:
+
+  ```bash
+  nix build github:Yakitrak/notesmd-cli
+  ./result/bin/notesmd-cli --help
+  ```
+
+- Or enter an ephemeral shell with updated `$PATH`:
+
+  ```bash
+  nix develop github:Yakitrak/notesmd-cli
+  notesmd-cli --help
+  exit
+  ```
+
+You can **pin a release** by adding a ref to the flake URL (tag, branch, or commit: `github:OWNER/REPO/REF`), for example:
+
+```bash
+nix run github:Yakitrak/notesmd-cli/v0.3.4 -- --help
+```
+
+#### NixOS (`configuration.nix`)
+
+Add a package to `environment.systemPackages` (or use `home.packages` on Home Manager the same way). `fetchFromGitHub.rev` should match the exact commit you want:
+
+```nix
+{ pkgs, lib, ... }:
+
+{ # ...
+  environment.systemPackages = [
+    (pkgs.buildGoModule {
+      pname = "notesmd-cli";
+      version = "0.3.4";
+
+      src = pkgs.fetchFromGitHub {
+        owner = "Yakitrak";
+        repo = "notesmd-cli";
+        rev = "b58227d0ffaa06eb7880ba7cd16561111deda79d"; # commit for v0.3.4
+        hash = "sha256-sZKyXDgDuJI7cFIMQl1w2Ir92HmhZ1Vhz7FUoEkn3Mo="; # hash for v0.3.4
+      };
+      vendorHash = null;
+    })
+  ];
+  # ...
+}
+```
+
+**Updating**: When you change `rev`, you must update `hash` as well, otherwise the build fails. To obtain the 
+correct `hash`, temporarily set `hash = lib.fakeHash;` and run `sudo nixos-rebuild switch`, copy 
+the `sha256-...` value from the error message into your configuration, and rebuild again.
+
+
 ### Build from Source
 
 Requires [Go](https://go.dev/dl/) 1.19 or later.
